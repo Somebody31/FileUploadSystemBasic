@@ -1,0 +1,10 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server.log
+.env
+uploads/
+mysql_data/
+mysql.sock
+.DS_Store

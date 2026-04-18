@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Upload System</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 32px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 16px;
+    }
+    .upload-section {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    input[type="file"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: white;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+    .btn-danger {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+    .filename {
+      flex: 1;
+      font-size: 15px;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>File Upload System</h1>
+
+    <div class="upload-section">
+      <input type="file" id="fileInput">
+      <button class="btn-primary" onclick="uploadFile()">Upload</button>
+    </div>
+
+    <h2>Uploaded Files</h2>
+    <ul id="fileList"></ul>
+  </div>
+
+  <script>
+    // Load and display all files
+    function loadFiles() {
+      fetch('/files')
+        .then(function (res) { return res.json(); })
+        .then(function (files) {
+          var list = document.getElementById('fileList');
+          list.innerHTML = '';
+
+          for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var li = document.createElement('li');
+            li.innerHTML = '<span class="filename">' + file.filename + '</span>' +
+              '<div class="actions">' +
+              '<button class="btn-secondary" onclick="renameFile(' + file.id + ', \'' + file.filename.replace(/'/g, "\\'") + '\')">Rename</button> ' +
+              '<button class="btn-danger" onclick="deleteFile(' + file.id + ')">Delete</button>' +
+              '</div>';
+            list.appendChild(li);
+          }
+        });
+    }
+
+    // Upload a file
+    function uploadFile() {
+      var input = document.getElementById('fileInput');
+      if (!input.files.length) return alert('Select a file first');
+
+      var formData = new FormData();
+      formData.append('file', input.files[0]);
+
+      fetch('/upload', { method: 'POST', body: formData })
+        .then(function (res) { return res.json(); })
+        .then(function () {
+          input.value = '';
+          loadFiles();
+        });
+    }
+
+    // Delete a file
+    function deleteFile(id) {
+      if (!confirm('Delete this file?')) return;
+
+      fetch('/files/' + id, { method: 'DELETE' })
+        .then(function (res) { return res.json(); })
+        .then(function () { loadFiles(); });
+    }
+
+    // Rename a file
+    function renameFile(id, currentName) {
+      var newName = prompt('Enter new filename:', currentName);
+      if (!newName || newName === currentName) return;
+
+      fetch('/files/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: newName })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function () { loadFiles(); });
+    }
+
+    loadFiles();
+  </script>
+</body>
+</html>
